@@ -40,7 +40,6 @@ class myiot_db {
             editable BOOLEAN,
             value_column TINYTEXT NOT NULL,
             updated BOOLEAN,
-            typeof VARCHAR(20) NOT NULL,
             value TEXT,
             time_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id)

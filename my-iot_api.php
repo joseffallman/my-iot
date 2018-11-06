@@ -16,6 +16,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Recive inputs from device. If no security key is given a new
  * is created and device is updated. 
  * 
+ * Page Link example:
+ *      <wordpress>/wp-json/my-iot/v1/api
+ * 
  * Url args:
  *      apikey
  *      securitykey

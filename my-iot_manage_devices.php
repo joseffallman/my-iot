@@ -46,7 +46,7 @@ class myiot_manage_devices extends WP_List_Table {
         /*
          * Sort the array.
          */
-        usort( $this->example_data, array( &$this, 'usort_reorder' ) );
+        //usort( $this->example_data, array( &$this, 'usort_reorder' ) );
 
         /*
          * Process your actions

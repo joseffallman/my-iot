@@ -116,7 +116,7 @@ class myiot_add_device {
         return wp_generate_password( 28, false, false );
     }
 
-    function generate_security_key() {
+    public static function generate_security_key() {
         return rand( 10000, 99999 );
     }
 }

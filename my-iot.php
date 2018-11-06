@@ -34,6 +34,7 @@ class myiot {
         require_once( $this->myiot_dir . 'my-iot_manage_devices.php' );
         require_once( $this->myiot_dir . 'my-iot_add_device.php'     );
         require_once( $this->myiot_dir . 'my-iot_api.php'            );
+        require_once( $this->myiot_dir . 'my-iot_shortcodes.php'     );
 
         // Add actions.
         register_activation_hook(   __FILE__,   array( $this, 'plugin_activated'    ) );
@@ -43,6 +44,7 @@ class myiot {
 
         // Create classes
         $this->myiot_api = new myiot_api;
+        new myiot_shortcodes;
 
 
         // Default refresh time
