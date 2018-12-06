@@ -220,17 +220,13 @@ class myiot_db {
         $orderby = ( 'time_updated' == $orderby ) ? "ORDER BY ds.time_updated" : "ORDER BY d.id" ;
         $order = ( 'DESC' == strtoupper( $order ) ) ? "DESC" : "ASC";
 
-        $query = $wpdb->prepare(
-            "
-            SELECT      d.*, ds.time_updated, count(ds.id) AS sensors
-            FROM        $device_table d
-            LEFT JOIN   $device_sensors_table ds
-            ON          (d.id = ds.device_id)
-            $orderby $order
-            ",
-            array(
-            )
-        );
+        $query = "
+        SELECT      d.*, ds.time_updated, count(ds.id) AS sensors
+        FROM        $device_table d
+        LEFT JOIN   $device_sensors_table ds
+        ON          (d.id = ds.device_id)
+        $orderby $order
+        ";
 
         $devices = $wpdb->get_results( $query, ARRAY_A );
         return $devices;
@@ -361,8 +357,7 @@ class myiot_db {
         $device_sensors_table = $this->get_device_sensors_table();
         $sensor_table = $this->get_sensor_table();
 
-        $query = $wpdb->prepare(
-            "
+        $query = "
             SELECT      s.*, ds.*, ds.id AS sensor_id
             FROM        $device_sensors_table ds
             LEFT JOIN   $sensor_table s
@@ -373,10 +368,8 @@ class myiot_db {
                         s.time_updated = s2.time_updated AND s.id < s2.id ))
             WHERE       s2.id IS NULL
             AND         ds.device_id = $id
-            ",
-            array(
-            )
-        );
+            ORDER BY    ds.name ASC
+            ";
 
         $devices = $wpdb->get_results( $query, ARRAY_A );
         return $devices;
@@ -386,9 +379,9 @@ class myiot_db {
         global $wpdb;
         $device_sensors_table = $this->get_device_sensors_table();
         $sensor_table = $this->get_sensor_table();
+        $editable_sensors = [];
 
-        $query = $wpdb->prepare(
-            "
+        $query = "
             SELECT      s.*, ds.*, ds.id AS sensor_id
             FROM        $device_sensors_table ds
             LEFT JOIN   $sensor_table s
@@ -400,13 +393,47 @@ class myiot_db {
             WHERE       s2.id IS NULL
             AND         ds.device_id = $id
             AND         ds.editable = 1
-            ",
-            array(
-            )
-        );
+            ";
 
-        $devices = $wpdb->get_results( $query, ARRAY_A );
-        return $devices;
+        $outputs = $wpdb->get_results( $query, ARRAY_A );
+        foreach( $outputs as $output ) {
+            $editable_sensors[ $output['name'] ] = array(
+                "slug" => $output['slug'],
+                "value" => $output['value'],
+                "updated" => $output['updated']
+            );
+        }
+        return $editable_sensors;
+    }
+
+    /**
+     * Return a sensor with id
+     *
+     * @param [int] $id of sensor to return.
+     * @return array
+     */
+    function get_sensor( $id ) {
+        global $wpdb;
+        $device_sensors_table = $this->get_device_sensors_table();
+        $sensor_table = $this->get_sensor_table();
+        
+        $query = $wpdb->prepare("
+            SELECT      s.*, ds.*, ds.id AS sensor_id
+            FROM        $device_sensors_table ds
+            LEFT JOIN   $sensor_table s
+            ON          (ds.id = s.sensor_id)
+            LEFT JOIN   $sensor_table s2
+            ON          (ds.id = s2.sensor_id AND 
+                        (s.time_updated < s2.time_updated OR
+                        s.time_updated = s2.time_updated AND s.id < s2.id ))
+            WHERE       s2.id IS NULL
+            AND         ds.id = %d
+            ",
+            $id
+        );
+        
+        $outputs = $wpdb->get_row( $query, ARRAY_A );
+        return $outputs;
     }
 
     /**
@@ -439,6 +466,9 @@ class myiot_db {
                     $formats[] = '%s';
             }
 
+            $insert['time_updated'] = current_time('mysql');
+            $formats[] = '%s';
+
             $bool = $wpdb->insert( 
                 $sensor_table,
                 $insert,
@@ -447,9 +477,9 @@ class myiot_db {
 
             $update = $wpdb->update(
                 $device_sensors_table,
-                array( 'value' => $sensor['value'] ),
+                array( 'value' => $sensor['value'], 'time_updated' => current_time('mysql') ),
                 array( 'id' => $sensor['sensor_id'] ),
-                array( '%s' ),
+                array( '%s', '%s' ),
                 array( '%d' )
             );
         }
@@ -457,6 +487,34 @@ class myiot_db {
         return $bool;
     }
 
+    /**
+     * Mark a sensor as updated so it will be given to your device on next update
+     *
+     * @param [type] $sensor_id
+     * @param [type] $value
+     * @return void
+     */
+    function sensor_output_flag( $sensor_id, $value ) {
+        global $wpdb;
+        $device_sensors_table = $this->get_device_sensors_table();
+
+        $update = $wpdb->update(
+            $device_sensors_table,
+            array( 'updated' => $value ),
+            array( 'id' => $sensor_id ),
+            array( '%d' ),
+            array( '%d' )
+        );
+
+        return $update;
+    }
+
+    /**
+     * Restores all output flag. When your device have read and updated it's state's
+     *
+     * @param [type] $id
+     * @return void
+     */
     function change_device_sensor_output_flag( $id ) {
         global $wpdb;
         $device_sensors_table = $this->get_device_sensors_table();
@@ -478,6 +536,27 @@ class myiot_db {
                 '%d'
             )
         );
+    }
+
+    function get_latest_update( $device_id ) {
+        global $wpdb;
+        $device_sensors_table = $this->get_device_sensors_table();
+
+        $query = $wpdb->prepare(
+            "
+            SELECT      time_updated
+            FROM        $device_sensors_table
+            WHERE       device_id = %d
+            AND         ( editable IS NULL OR editable != %d )
+            ORDER BY    time_updated DESC
+            ",
+            array(
+                $device_id,
+                1
+            )
+        );
+        $time_updated = $wpdb->get_var( $query );
+        return $time_updated;
     }
 }
 

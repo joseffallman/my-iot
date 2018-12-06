@@ -54,14 +54,15 @@ class myiot_api {
         $db = new myiot_db;
 
         // Check if this api key is the key for any device.
-        if ( isset( $_GET['apikey'] ) ) {
+        if ( isset( $_GET['apikey'] ) &&
+            $id = $db->check_api_key( $_GET['apikey'] )
+            ) {
 
             $securitykey = ( isset( $_GET['securitykey'] ) ) ? $_GET['securitykey'] : '';
-            if ( $id = $db->check_api_and_security_key( $_GET['apikey'], $securitykey ) ) {
-
-                if ( $this->api_update_sensor_values( $id ) ) {
-                    return $this->api_output_editable_sensors( $id );
-                }
+            //if ( $id = $db->check_api_and_security_key( $_GET['apikey'], $securitykey ) ) {
+            if ( $db->check_security_key( $id, $securitykey ) ) {
+                $this->api_update_sensor_values( $id );
+                return $this->api_output_editable_sensors( $id );
             } else {
                 $db->change_device_sensor_output_flag( $id );
                 return $this->api_new_securitykey( $id );

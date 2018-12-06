@@ -27,7 +27,7 @@ class myiot {
 
     function __construct() {
         // Set properties.
-        $this->myiot_dir = dirname( __FILE__ ) . '\\';
+        $this->myiot_dir = dirname( __FILE__ ) . '/';
 
         // Include files.
         require_once( $this->myiot_dir . 'my-iot_db.php'             );
@@ -44,7 +44,8 @@ class myiot {
 
         // Create classes
         $this->myiot_api = new myiot_api;
-        new myiot_shortcodes;
+        $shortcode = new myiot_shortcodes;
+        register_activation_hook( __FILE__, array( $shortcode, 'register_rewrite_rule') );
 
 
         // Default refresh time
