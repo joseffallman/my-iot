@@ -98,8 +98,9 @@ class myiot_shortcodes {
             $output .= "</div>";
             $output .= "<span class='clear'></span>";
             $output .= "<div class='iot_widget_form_elements'>";
-            $output .= "<input type='number' value='$pin' name='PIN' placeholder='Enter PIN code' class='alignleft PIN_code'>";
-            $output .= "<input type='Submit' value='Kör' class='clear'>";
+            $output .= "<div class='iot_infotext'>Enter device pin code:</div>";
+            $output .= "<input type='number' value='$pin' name='PIN' placeholder='PIN code' class='alignleft PIN_code'>";
+            $output .= "<input type='Submit' value='Välj' class='clear'>";
             $output .= "<span class='clear'></span>";
             $output .= "</div>";
             $output .= "</div>";

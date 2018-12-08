@@ -14,9 +14,13 @@
     width: initial;
     padding: 0.3em 0.7em;
 }
+.iot_widget_form_elements input[type=Submit] {
+    float: right;
+}
 @media only screen and (max-width: 426px) {
     .iot_widget_form_elements input[type=Submit] {
         margin-top: 1em;
+        float: none;
     }
 }
 .iot_widget_device .refresh_line {

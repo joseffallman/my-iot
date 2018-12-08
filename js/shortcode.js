@@ -11,6 +11,7 @@ var refreshTimer;
 
 function refreshLine() {
     var refreshOject    = jQuery(".refresh_line");
+    refreshOject.stop( true );
     var refresh         = parseInt( refreshOject.attr('refresh') );
     var diff            = parseInt( refreshOject.attr('diff_seconds') );
     //console.log(refresh + " " + diff);
@@ -74,12 +75,16 @@ function reload() {
 
 jQuery( document ).on( 'click', '.onoffswitch-checkbox', function() {
     clearTimeout(refreshTimer);
+    var refreshOject    = jQuery(".refresh_line");
+    refreshOject.stop( true );
 
-    var sensor_id    = jQuery(this).attr("sensor");
     var parentObject = jQuery(this).parents(".iot_widget_device");
     var device_id    = parentObject.attr('id');
     var pin          = parentObject.find('.PIN').html();
+
+    var sensor_id    = jQuery(this).attr("sensor");
     var value        = jQuery(this).closest("input").attr("checked");
+
     if ( value == "checked" ) {
         value = 1;
     } else {

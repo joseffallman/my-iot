@@ -37,6 +37,8 @@ class myiot_api {
     function __construct() {
         // Register API endpoints
         add_action( 'rest_api_init', array( $this, 'register_api' ) );
+        add_filter( 'rest_authentication_errors', array( $this, 'rest_auth' ) );
+        
     }
 
     function register_api() {
@@ -44,6 +46,15 @@ class myiot_api {
             'methods'  => 'GET',
             'callback' => array( $this, 'api_callback' )
         ) );
+    }
+
+    function rest_auth( $result ) {
+        global $wp;
+        $url = home_url( $wp->request );
+        if ( $this->get_api_url() == $url ) {
+            return true;
+        }
+        //return true;
     }
 
     function get_api_url() {
@@ -61,8 +72,9 @@ class myiot_api {
             $securitykey = ( isset( $_GET['securitykey'] ) ) ? $_GET['securitykey'] : '';
             //if ( $id = $db->check_api_and_security_key( $_GET['apikey'], $securitykey ) ) {
             if ( $db->check_security_key( $id, $securitykey ) ) {
-                $this->api_update_sensor_values( $id );
-                return $this->api_output_editable_sensors( $id );
+                $edited_sensors            = $this->api_output_editable_sensors( $id );
+                $edited_sensors["success"] = $this->api_update_sensor_values( $id );
+                return $edited_sensors;
             } else {
                 $db->change_device_sensor_output_flag( $id );
                 return $this->api_new_securitykey( $id );
@@ -135,6 +147,9 @@ class myiot_api {
         }
 
         $db->change_device_sensor_output_flag( $id );
+        if ( !is_array( $outputs) ) {
+            $outputs = array();
+        }
         return $outputs;
     }
 
