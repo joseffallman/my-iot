@@ -14,6 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class myiot_db {
 
+    function init() {
+        global $wpdb;
+        $wpdb->query('SET SQL_BIG_SELECTS=1');
+    }
+
     function install_plugin_tables() {
         global $wpdb;
 

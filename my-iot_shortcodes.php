@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class myiot_shortcodes {
 
-    function __construct() {
+    function __construct( $_db ) {
         add_shortcode( 'iot_widget',                array( $this, 'iot_widget' ) );
         add_action( 'wp_enqueue_scripts',           array( $this, 'register_script' ) );
         add_action( 'wp_ajax_nopriv_sensor_change', array( $this, 'sensor_change' ) );
@@ -25,7 +25,7 @@ class myiot_shortcodes {
         add_action( 'template_redirect', array( $this, 'handle_view' ) );
         add_filter( 'query_vars',        array( $this, 'add_rewrite_var' ) );
 
-        $this->myiot_db = new myiot_db;
+        $this->myiot_db = $_db;
         $this->js_data = array();
 
         //add_action( 'init', array( $this, 'register_rewrite_rule' ) );

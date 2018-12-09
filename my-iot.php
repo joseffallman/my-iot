@@ -22,8 +22,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class myiot {
-    public $myiot_dir;
-    public $myiot_api;
+    public  $myiot_dir;
+    public  $myiot_api;
+    private $db;
 
     function __construct() {
         // Set properties.
@@ -42,9 +43,13 @@ class myiot {
 
         add_action( 'admin_menu',    array( $this, 'admin_menu'   ) );
 
+        // Enable large sql
+        $this->db = new myiot_db;
+        $this->db->init();
+
         // Create classes
-        $this->myiot_api = new myiot_api;
-        $shortcode = new myiot_shortcodes;
+        $this->myiot_api = new myiot_api( $this->db );
+        $shortcode       = new myiot_shortcodes( $this->db );
         register_activation_hook( __FILE__, array( $shortcode, 'register_rewrite_rule') );
 
 

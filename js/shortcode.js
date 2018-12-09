@@ -20,8 +20,18 @@ function refreshLine() {
         //Offline
         console.log("Sensor offline in: " + diff + " seconds");
         refreshOject.css("background-color", "red");
-        clearTimeout(refreshTimer);
-        refreshTimer = setTimeout( reload, refresh*1000 );
+        //clearTimeout(refreshTimer);
+        //refreshTimer = setTimeout( reload, refresh*1000 );
+        refreshOject.animate( {
+            width: 0
+        }, {
+            duration: refresh*1000,
+            easing: "linear",
+            complete: function() {
+                console.log("Time to update");
+                reload();
+            }
+        });
     }
     else {
         console.log("Sensor: Online");
@@ -34,7 +44,7 @@ function refreshLine() {
                 console.log("Time to update");
                 reload();
             }
-        })
+        });
     }
 }
 
