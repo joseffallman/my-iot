@@ -124,6 +124,8 @@ class myiot_shortcodes {
             $this->js_data = array(
                 'ajax_url' => admin_url( 'admin-ajax.php' )
             );
+
+            status_header( 200 );
             
             echo "<html><head><title>";
             echo get_bloginfo( 'name' );
@@ -186,7 +188,7 @@ class myiot_shortcodes {
                                     <input  type="checkbox"
                                             name="onoffswitch"
                                             class="onoffswitch-checkbox"
-                                            sensor="<?php echo $sensor['id'] ?>"
+                                            sensor="<?php echo $sensor['sensor_id'] ?>"
                                             id="myonoffswitch" <?php echo $checked ?>>
                                     <label class="onoffswitch-label" for="myonoffswitch">
                                         <span class="onoffswitch-inner"></span>

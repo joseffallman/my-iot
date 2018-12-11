@@ -67,21 +67,20 @@ class myiot_api {
 
     function api_callback( WP_REST_Request $request ) {
 
+        // New approach
+        if ( isset( $_GET['apikey'] ) ) {
+            $device = $this->db->get_device( NULL, $_GET['apikey'] );
+        }
 
-        // Check if this api key is the key for any device.
-        if ( isset( $_GET['apikey'] ) &&
-            $id = $this->db->check_api_key( $_GET['apikey'] )
-        ) {
-
-            $securitykey = ( isset( $_GET['securitykey'] ) ) ? $_GET['securitykey'] : '';
-            //if ( $id = $this->db->check_api_and_security_key( $_GET['apikey'], $securitykey ) ) {
-            if ( $this->db->check_security_key( $id, $securitykey ) ) {
-                $edited_sensors            = $this->api_output_editable_sensors( $id );
-                $edited_sensors["success"] = $this->api_update_sensor_values( $id );
-                return $edited_sensors;
+        if ( $device ) {
+            if ( isset( $device['securitykey'] ) && isset( $_GET['securitykey'] ) &&
+                $device['securitykey'] == $_GET['securitykey'] ) {
+                $edited_sensors = $this->api_output_editable_sensors( $device['id'] );
+                $updated        = $this->api_update_sensor_values( $device['id'] );
+                return array("sensors" => $edited_sensors, "update_success" => $updated);
             } else {
-                $this->db->change_device_sensor_output_flag( $id );
-                return $this->api_new_securitykey( $id );
+                $this->db->change_device_sensor_output_flag( $device['id'] );
+                return $this->api_new_securitykey( $device['id'] );
             }
         } else {
             $error = new WP_Error;
@@ -119,10 +118,12 @@ class myiot_api {
      */
     function api_update_sensor_values( $id ) {
 
-        $sensors = $this->db->get_device_sensors( $id );
+        if ( !isset( $this->sensors ) ) {
+            $this->sensors = $this->db->get_device_sensors( $id );
+        }
         $update_sensors = array();
 
-        foreach( $sensors as $sensor ) {
+        foreach( $this->sensors as $sensor ) {
             if ( isset( $_GET[ $sensor['slug'] ] ) ) {
                 if ( $this->validate_sensor_type( $_GET[ $sensor['slug'] ], $sensor['value_column'] ) ) {
                     $sensor['value'] = $_GET[ $sensor['slug'] ];
@@ -143,18 +144,26 @@ class myiot_api {
 
     function api_output_editable_sensors( $id ) {
 
-        $outputs = $this->db->get_editable_sensors( $id );
-        foreach( $outputs as $key => $output ) {
-            if ( null == $output['value'] || ! $output['updated'] ) {
-                unset( $outputs[$key] );
+        if ( !isset( $this->sensors ) ) {
+            $this->sensors = $this->db->get_device_sensors( $id );
+        }
+
+        $edited_sensors = [];
+        foreach( $this->sensors as $key => $sensor ) {
+            if ( $sensor['editable'] && $sensor['value'] && $sensor['updated'] ) {
+                //unset( $outputs[$key] );
+                $edited_sensor['name'] = $sensor['name'];
+                $edited_sensor['slug'] = $sensor['slug'];
+                $edited_sensor['value'] = $sensor['value'];
+                $edited_sensor['time_updated'] = $sensor['time_updated'];
+                $edited_sensors[] = $edited_sensor;
             }
         }
 
-        $this->db->change_device_sensor_output_flag( $id );
-        if ( !is_array( $outputs) ) {
-            $outputs = array();
+        if ( is_array( $edited_sensors) ) {
+            $this->db->change_device_sensor_output_flag( $id );
         }
-        return $outputs;
+        return $edited_sensors;
     }
 
     /**

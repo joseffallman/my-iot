@@ -189,10 +189,10 @@ class myiot_db {
         $device_sensors_table = $this->get_device_sensors_table();
 
         if ( null != $id ) {
-            $where = " AND d.id = %d ";
+            $where = "WHERE d.id = %d ";
             $where_var = $id;
         } elseif ( null != $apikey ) {
-            $where = " AND d.apikey = %s ";
+            $where = "WHERE d.apikey = %s ";
             $where_var = $apikey;
         } else {
             return false;
@@ -210,11 +210,11 @@ class myiot_db {
                 $where_var
             )
         );
-        $device = $wpdb->get_results( $query, ARRAY_A );
+        $device = $wpdb->get_row( $query, ARRAY_A );
         if ( false === $device ) {
             return false;
         }
-        return $device[0];
+        return $device;
     }
 
     function get_all_devices( $orderby = '', $order = '') {
@@ -327,37 +327,8 @@ class myiot_db {
      * @return array with sensors for this device.
      */
     function get_device_sensors( $id ) {
-        /*
-        $s1 = array(
-            'name'  => 'kontaktor',
-            'slug'  => 'kontaktor',
-            'db'    => 'kontaktor',
-            'type'  => 'bool'
-        );
-        $s2 = array(
-            'name'  => 'motorskydd',
-            'slug'  => 'motorskydd',
-            'db'    => 'motorskydd',
-            'type'  => 'bool'
-        );
-        $s3 = array(
-            'name'  => 'timeON',
-            'slug'  => 'timeON',
-            'db'    => 'time_on',
-            'type'  => 'int'
-        );
-        $s4 = array(
-            'name'      => 'relay',
-            'slug'      => 'relay',
-            'output'    => true,
-            'db'        => 'relay',
-            'value'     => 0,
-            'updated'   => true,
-            'type'      => 'bool'
-        );
-        */
-        //return array( $s1, $s2, $s3, $s4 );
 
+        /*
         global $wpdb;
         $device_sensors_table = $this->get_device_sensors_table();
         $sensor_table = $this->get_sensor_table();
@@ -378,6 +349,39 @@ class myiot_db {
 
         $devices = $wpdb->get_results( $query, ARRAY_A );
         return $devices;
+        */
+
+
+        global $wpdb;
+        $device_sensors_table = $this->get_device_sensors_table();
+        $sensor_values_table  = $this->get_sensor_table();
+
+        $query = "
+            SELECT      ds.*, ds.id AS sensor_id
+            FROM        $device_sensors_table ds
+            WHERE       ds.device_id = $id
+            ORDER BY    ds.name ASC
+        ";
+
+        $sensors = $wpdb->get_results( $query, ARRAY_A );
+
+        if ( $sensors ) {
+            foreach( $sensors as $key => $sensor ) {
+                $sensor_id = $sensor['id'];
+                $query = "
+                    SELECT      s.*
+                    FROM        $sensor_values_table s
+                    WHERE       s.sensor_id = $sensor_id
+                    ORDER BY    s.time_updated DESC LIMIT 1
+                ";
+
+                $values = $wpdb->get_row( $query, ARRAY_A );
+                if ( $values ) {
+                    $sensors[$key] = array_merge( $sensor, $values );
+                }
+            }
+        }
+        return $sensors;
     }
 
     function get_editable_sensors( $id ) {
