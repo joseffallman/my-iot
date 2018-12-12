@@ -38,7 +38,7 @@ function refreshLine() {
         refreshOject.animate( {
             width: 0
         }, {
-            duration: refresh*1000,
+            duration: (refresh*1000 - diff*1000),
             easing: "linear",
             complete: function() {
                 console.log("Time to update");

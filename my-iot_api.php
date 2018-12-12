@@ -150,7 +150,7 @@ class myiot_api {
 
         $edited_sensors = [];
         foreach( $this->sensors as $key => $sensor ) {
-            if ( $sensor['editable'] && $sensor['value'] && $sensor['updated'] ) {
+            if ( $sensor['editable'] && NULL != $sensor['value'] && $sensor['updated'] ) {
                 //unset( $outputs[$key] );
                 $edited_sensor['name'] = $sensor['name'];
                 $edited_sensor['slug'] = $sensor['slug'];
