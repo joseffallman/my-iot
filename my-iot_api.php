@@ -73,8 +73,11 @@ class myiot_api {
         }
 
         if ( $device ) {
-            if ( isset( $device['securitykey'] ) && isset( $_GET['securitykey'] ) &&
-                $device['securitykey'] == $_GET['securitykey'] ) {
+            if (
+                isset( $device['securitykey'] ) &&
+                isset( $_GET['securitykey'] ) &&
+                $device['securitykey'] == $_GET['securitykey']
+            ) {
                 $edited_sensors = $this->api_output_editable_sensors( $device['id'] );
                 $updated        = $this->api_update_sensor_values( $device['id'] );
                 return array("sensors" => $edited_sensors, "update_success" => $updated);

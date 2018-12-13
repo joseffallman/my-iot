@@ -422,6 +422,7 @@ class myiot_db {
      * @return array
      */
     function get_sensor( $id ) {
+        /*
         global $wpdb;
         $device_sensors_table = $this->get_device_sensors_table();
         $sensor_table = $this->get_sensor_table();
@@ -443,6 +444,34 @@ class myiot_db {
         
         $outputs = $wpdb->get_row( $query, ARRAY_A );
         return $outputs;
+        */
+        
+        global $wpdb;
+        $device_sensors_table = $this->get_device_sensors_table();
+        $sensor_values_table  = $this->get_sensor_table();
+
+        $query = "
+            SELECT      ds.*, ds.id AS sensor_id
+            FROM        $device_sensors_table ds
+            WHERE       ds.id = $id
+        ";
+
+        $sensor = $wpdb->get_row( $query, ARRAY_A );
+
+        if ( $sensor ) {
+                $sensor_id = $sensor['id'];
+                $query = "
+                    SELECT      s.*
+                    FROM        $sensor_values_table s
+                    WHERE       s.sensor_id = $sensor_id
+                    ORDER BY    s.time_updated DESC LIMIT 1
+                ";
+                $values = $wpdb->get_row( $query, ARRAY_A );
+                if ( $values ) {
+                    $sensor = array_merge( $sensor, $values );
+                }
+        }
+        return $sensor;
     }
 
     /**
@@ -450,9 +479,10 @@ class myiot_db {
      *
      * @param int $id of device
      * @param array $sensors with $sensor arrays
+     * @param bool $user_changed
      * @return void
      */
-    function add_sensor_values( $id, $sensors ) {
+    function add_sensor_values( $id, $sensors, $user_changed = false ) {
         global $wpdb;
         $device_sensors_table = $this->get_device_sensors_table();
         $sensor_table = $this->get_sensor_table();
@@ -484,11 +514,18 @@ class myiot_db {
                 $formats
             );
 
+            // Update device sensor table with latest value / time
+            $values  = array( 'value' => $sensor['value'], 'time_updated' => current_time('mysql') );
+            $formats = array( '%s', '%s' );
+            if ( $user_changed ) {
+                $values['updated'] = 1;
+                $formats[]         = '%d';
+            }
             $update = $wpdb->update(
                 $device_sensors_table,
-                array( 'value' => $sensor['value'], 'time_updated' => current_time('mysql') ),
+                $values,
                 array( 'id' => $sensor['sensor_id'] ),
-                array( '%s', '%s' ),
+                $formats,
                 array( '%d' )
             );
         }

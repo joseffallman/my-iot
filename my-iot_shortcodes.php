@@ -25,7 +25,7 @@ class myiot_shortcodes {
         add_action( 'template_redirect', array( $this, 'handle_view' ) );
         add_filter( 'query_vars',        array( $this, 'add_rewrite_var' ) );
 
-        $this->myiot_db = $_db;
+        $this->db = $_db;
         $this->js_data = array();
 
         //add_action( 'init', array( $this, 'register_rewrite_rule' ) );
@@ -75,7 +75,7 @@ class myiot_shortcodes {
 
         $device = ( isset( $args['device'] ) ) ? $args['device'] : false;
         $sensor = ( isset( $args['sensor'] ) ) ? $args['sensor'] : false;
-        $devices = $this->myiot_db->get_all_devices();
+        $devices = $this->db->get_all_devices();
         $form_url = site_url();
 
         $output = "<div class='iot_widget'>";
@@ -143,9 +143,9 @@ class myiot_shortcodes {
 
     function device_controll( $args = "" ) {
         $id         = ( isset( $args['id'] ) ) ? $args['id'] : $_POST['id'];
-        $device     = $this->myiot_db->get_device($id);
-        $sensors    = $this->myiot_db->get_device_sensors($id);
-        $last_upd   = $this->myiot_db->get_latest_update($id);
+        $device     = $this->db->get_device($id);
+        $sensors    = $this->db->get_device_sensors($id);
+        $last_upd   = $this->db->get_latest_update($id);
         $pin        = ( isset( $args['PIN'] ) ) ? $args['PIN'] : $_POST['PIN'];
         $fullHtml   = ( isset( $args['inner'] ) && $args['inner'] ) ? false : true ;
 
@@ -222,20 +222,47 @@ class myiot_shortcodes {
      * @return void
      */
     function sensor_change() {
+        /*
         $id = $_REQUEST['sensor_id'];
-        $sensor = $this->myiot_db->get_sensor( $id );
+        $sensor = $this->db->get_sensor( $id );
 
         $sensor['value'] = $_REQUEST['sensor_value'];
-        $success = $this->myiot_db->add_sensor_values( $sensor['device_id'], array( $sensor ) );
-        $this->myiot_db->sensor_output_flag( $sensor['id'], $success );
+        $success = $this->db->add_sensor_values( $sensor['device_id'], array( $sensor ) );
+        $this->db->sensor_output_flag( $sensor['id'], $success );
 
         $this->device_reload( $success );
+
+        */
+        if ( isset( $_POST['device_id'] ) ) {
+            $id     = $_POST['device_id'];
+            $device = $this->db->get_device( $id );
+        }
+
+        if ( $device ) {
+            if (
+                isset( $device['securitykey'] ) &&
+                isset( $_POST['pin'] ) &&
+                isset( $_POST['sensor_id'] ) &&
+                $device['securitykey'] == $_POST['pin']
+            ) {
+                // Insert the user input to database
+                $sensor = $this->db->get_sensor( $_POST['sensor_id'] );
+                $sensor['value'] = $_REQUEST['sensor_value'];
+                $success = $this->db->add_sensor_values( $sensor['device_id'], array( $sensor ), true );
+                $this->device_reload( $success );
+
+            } else {
+                // Something's wrong
+                $this->device_reload( $false );
+            }
+        }
+
     }
 
     function device_reload( $success = true ) {
         $device_controll_args = array(
-            "id"    => $_REQUEST['device_id'],
-            "PIN"   => $_REQUEST['pin'],
+            "id"    => $_POST['device_id'],
+            "PIN"   => $_POST['pin'],
             "inner" => true
         );
         $html = $this->device_controll( $device_controll_args );

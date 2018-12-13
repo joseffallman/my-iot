@@ -15,6 +15,7 @@ function refreshLine() {
     var refresh         = parseInt( refreshOject.attr('refresh') );
     var diff            = parseInt( refreshOject.attr('diff_seconds') );
     //console.log(refresh + " " + diff);
+    console.log( "Number of animations in queue: " + refreshOject.queue().length );
     
     if ( diff > (refresh + (refresh / 1) ) ) {
         //Offline
@@ -86,7 +87,9 @@ function reload() {
 jQuery( document ).on( 'click', '.onoffswitch-checkbox', function() {
     clearTimeout(refreshTimer);
     var refreshOject    = jQuery(".refresh_line");
+    console.log( refreshOject.queue().length );
     refreshOject.stop( true );
+    console.log( refreshOject.queue().length );
 
     var parentObject = jQuery(this).parents(".iot_widget_device");
     var device_id    = parentObject.attr('id');
