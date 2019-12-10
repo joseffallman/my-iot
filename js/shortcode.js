@@ -12,8 +12,11 @@ var refreshTimer;
 function refreshLine() {
     var refreshOject    = jQuery(".refresh_line");
     refreshOject.stop( true );
+
     var refresh         = parseInt( refreshOject.attr('refresh') );
     var diff            = parseInt( refreshOject.attr('diff_seconds') );
+    var animation_time  = (refresh*1000 - diff*1000);
+    var startwidth      = refreshOject.width();
     //console.log(refresh + " " + diff);
     console.log( "Number of animations in queue: " + refreshOject.queue().length );
     
@@ -39,11 +42,17 @@ function refreshLine() {
         refreshOject.animate( {
             width: 0
         }, {
-            duration: (refresh*1000 - diff*1000),
+            duration: animation_time,
             easing: "linear",
             complete: function() {
                 console.log("Time to update");
                 reload();
+            },
+            step: function( now, fx ) {
+                var endwidth     = 0;
+                var percent_left = now / startwidth;
+                var time_left    = Math.round( animation_time * percent_left);
+                jQuery(this).attr('animate_timeleft', time_left);
             }
         });
     }
@@ -74,26 +83,34 @@ function reload() {
             //console.log(response.success)
             parentObject.html(response.html);
             jQuery( document ).trigger( 'ajax_loaded' );
+            parentObject.removeClass('msp-selected');
         },
         error: function() {
             var refreshOject = jQuery(".refresh_line");
             refreshOject.css("background-color", "red");
             refreshOject.css("width", "100%");
             jQuery( document ).trigger( 'ajax_loaded' );
+            parentObject.removeClass('msp-selected');
         }
     })
+
 }
 
 jQuery( document ).on( 'click', '.onoffswitch-checkbox', function() {
     clearTimeout(refreshTimer);
     var refreshOject    = jQuery(".refresh_line");
-    console.log( refreshOject.queue().length );
     refreshOject.stop( true );
-    console.log( refreshOject.queue().length );
-
+    
     var parentObject = jQuery(this).parents(".iot_widget_device");
     var device_id    = parentObject.attr('id');
     var pin          = parentObject.find('.PIN').html();
+    var refresh      = parseInt( refreshOject.attr('refresh') );
+    var time_left    = parseInt( refreshOject.attr('animate_timeleft') );
+    /*
+    console.log( "Time left: " + time_left );
+    console.log( "Refresh left: " + refresh );
+    console.log( "Wait time: " + (refresh*1000 + 500 + time_left) + "ms");
+    */
 
     var sensor_id    = jQuery(this).attr("sensor");
     var value        = jQuery(this).closest("input").attr("checked");
@@ -105,6 +122,7 @@ jQuery( document ).on( 'click', '.onoffswitch-checkbox', function() {
     }
     //var html = parentObject.html();
     //parentObject.html("<center>...arbetar med det...</center>");
+    parentObject.addClass('msp-selected');
 
     /*
     console.log("Device id: " + device_id);
@@ -125,7 +143,23 @@ jQuery( document ).on( 'click', '.onoffswitch-checkbox', function() {
         success: function( response ) {
             console.log( "Server success: " + response.success + " (true/false)")
             parentObject.html(response.html);
-            jQuery( document ).trigger( 'ajax_loaded' );
+            if ( response.success ) {
+                //refreshTimer = setTimeout( reload, (refresh*1000 + 500 + time_left) );
+                var refreshOject = jQuery(".refresh_line");
+                refreshOject.animate( {
+                    width: 0
+                }, {
+                    duration: (refresh*1000 + 500 + time_left),
+                    easing: "linear",
+                    complete: function() {
+                        console.log("Reload to se if device is updated");
+                        reload();
+                    }
+                });
+            } else {
+                jQuery( document ).trigger( 'ajax_loaded' );
+                parentObject.removeClass('msp-selected');
+            }
         }
     })
 })
