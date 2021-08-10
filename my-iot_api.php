@@ -72,7 +72,7 @@ class myiot_api {
             $device = $this->db->get_device( NULL, $_GET['apikey'] );
         }
 
-        if ( $device ) {
+        if ( isset( $device ) ) {
             if (
                 isset( $device['securitykey'] ) &&
                 isset( $_GET['securitykey'] ) &&
